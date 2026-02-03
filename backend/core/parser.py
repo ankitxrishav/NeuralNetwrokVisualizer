@@ -1,5 +1,6 @@
 from .utils import safe_shape
 from .analyzer import GraphAnalyzer
+import tensorflow as tf
 
 class GraphExtracter:
     """

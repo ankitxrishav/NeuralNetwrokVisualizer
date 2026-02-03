@@ -12,8 +12,10 @@ import {
 import '@xyflow/react/dist/style.css';
 import CustomNode from './components/CustomNode';
 import Inspector from './components/Inspector';
+import ThemeToggle from './components/ThemeToggle';
+import { useTheme } from './hooks/useTheme';
 import { getLayoutedElements } from './utils/layout';
-import { Upload, Loader2, Info, FileUp, Sparkles } from 'lucide-react';
+import { Upload, Loader2, FileUp, Sparkles } from 'lucide-react';
 
 const nodeTypes = {
   default: CustomNode
@@ -29,6 +31,8 @@ export default function App() {
   const [modelInfo, setModelInfo] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const { theme } = useTheme(); // Use global theme hook
 
   // --- Graph Handlers ---
   const onConnect = useCallback(
@@ -75,7 +79,9 @@ export default function App() {
       const rfEdges = data.edges.map(e => ({
         ...e,
         animated: true,
-        style: { stroke: '#475569', strokeWidth: 2 }
+        // Dynamic edge color based on theme is hard in ReactFlow style object
+        // So we default to a neutral gray that works on both dark/light
+        style: { stroke: '#64748b', strokeWidth: 2 }
       }));
 
       // Apply Layout
@@ -123,20 +129,20 @@ export default function App() {
 
   return (
     <div
-      className="w-screen h-screen bg-slate-950 relative overflow-hidden font-sans"
+      className="w-screen h-screen bg-slate-50 dark:bg-slate-950 relative overflow-hidden font-sans text-slate-900 dark:text-slate-50 transition-colors duration-300"
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
     >
       {/* Full Screen Drag Overlay */}
       {isDragging && (
-        <div className="absolute inset-0 z-[100] bg-blue-500/10 backdrop-blur-sm border-4 border-blue-500 border-dashed flex items-center justify-center animate-in fade-in duration-200 pointer-events-none">
-          <div className="bg-slate-900/90 p-8 rounded-2xl border border-blue-500/50 shadow-2xl flex flex-col items-center">
-            <div className="p-4 bg-blue-500/20 rounded-full mb-4 animate-bounce">
-              <FileUp size={48} className="text-blue-400" />
+        <div className="absolute inset-0 z-[100] bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-sm border-4 border-blue-400 border-dashed flex items-center justify-center animate-in fade-in duration-200 pointer-events-none">
+          <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl border-2 border-blue-400 shadow-2xl flex flex-col items-center">
+            <div className="p-6 bg-blue-500 rounded-full mb-6 animate-bounce shadow-lg shadow-blue-500/50">
+              <FileUp size={64} className="text-white" />
             </div>
-            <h2 className="text-2xl font-black text-white">Drop Model File Here</h2>
-            <p className="text-blue-200 mt-2">Release to visualize neural architecture</p>
+            <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">Drop Model File Here</h2>
+            <p className="text-blue-600 dark:text-blue-200 mt-4 text-lg font-medium">Release to visualize neural architecture</p>
           </div>
         </div>
       )}
@@ -150,78 +156,116 @@ export default function App() {
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
-        colorMode="dark"
+        colorMode={theme} // Dynamic ReactFlow Mode
         minZoom={0.1}
         maxZoom={2}
       >
-        <Controls className="!bg-slate-800 !border-slate-700 !shadow-xl [&>button]:!fill-white [&>button]:!border-slate-700" />
+        <Controls className="!bg-white dark:!bg-slate-800 !border-slate-200 dark:!border-slate-600 !shadow-xl [&>button]:!fill-slate-700 dark:[&>button]:!fill-slate-200 [&>button]:!border-slate-200 dark:[&>button]:!border-slate-600 hover:[&>button]:!bg-slate-50 dark:hover:[&>button]:!bg-slate-700" />
         <MiniMap
-          style={{ background: '#0f172a', border: '1px solid #334155' }}
+          style={{
+            background: theme === 'light' ? '#f8fafc' : '#0f172a',
+            border: theme === 'light' ? '1px solid #e2e8f0' : '1px solid #334155'
+          }}
           nodeColor="#3b82f6"
-          maskColor="rgba(0, 0, 0, 0.4)"
+          maskColor={theme === 'light' ? "rgba(255, 255, 255, 0.6)" : "rgba(0, 0, 0, 0.4)"}
         />
-        <Background color="#334155" gap={20} size={1} />
+        <Background
+          color={theme === 'light' ? '#cbd5e1' : '#334155'}
+          gap={24}
+          size={1}
+        />
 
-        {/* Brand & Upload Panel */}
-        <Panel position="top-left" className="m-6">
-          <div className="bg-slate-900/95 p-6 rounded-2xl border border-white/10 backdrop-blur-xl text-white shadow-2xl w-80">
-            {/* Brand Header */}
-            <div className="flex items-center gap-3 mb-6 pb-6 border-b border-white/10">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Sparkles size={20} className="text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                  NEURAL<br />VISUALIZER
-                </h1>
+        {/* Top Right: Theme Toggle */}
+        <Panel position="top-right" className="m-8">
+          <ThemeToggle />
+        </Panel>
+
+        {/* Brand & Upload Panel - Solid, High Contrast */}
+        <Panel position="top-left" className="m-8">
+          <div className="bg-white dark:bg-slate-900 p-0 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] w-80 overflow-hidden flex flex-col transition-colors duration-300">
+
+            {/* Header Section */}
+            <div className="p-6 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 ring-1 ring-black/5 dark:ring-white/10 shrink-0">
+                  <Sparkles size={24} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-black tracking-tight leading-none text-slate-900 dark:text-white">
+                    NEURAL<br />VISUALIZER
+                  </h1>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="p-6 space-y-6 bg-white dark:bg-slate-900">
               {/* Upload Zone */}
               <label
                 className={`
-                            flex flex-col items-center justify-center w-full h-40 
-                            rounded-xl border-2 border-dashed 
-                            transition-all duration-300 cursor-pointer group
-                            ${loading ? 'border-blue-500/50 bg-blue-500/5' : 'border-slate-700 hover:border-blue-500 hover:bg-slate-800/50'}
-                        `}
+                    flex flex-col items-center justify-center w-full h-44 
+                    rounded-xl border-2 border-dashed 
+                    transition-all duration-200 cursor-pointer group relative overflow-hidden
+                    ${loading
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
+                    : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }
+                `}
               >
                 {loading ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="animate-spin text-blue-500 mb-3" size={32} />
-                    <span className="text-sm font-bold text-blue-400 animate-pulse">Parsing Architecture...</span>
+                  <div className="flex flex-col items-center relative z-10">
+                    <Loader2 className="animate-spin text-blue-500 dark:text-blue-400 mb-3" size={36} />
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-300 animate-pulse uppercase tracking-wide">Parsing...</span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center text-center p-4">
-                    <div className="p-3 rounded-full bg-slate-800 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all duration-300 mb-3">
-                      <Upload className="text-slate-400 group-hover:text-blue-400" size={24} />
+                  <div className="flex flex-col items-center text-center p-4 relative z-10">
+                    <div className="p-3.5 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 group-hover:border-blue-500 group-hover:bg-blue-600 transition-all duration-200 mb-4 shadow-lg dark:shadow-xl">
+                      <Upload className="text-slate-400 dark:text-slate-300 group-hover:text-white" size={28} />
                     </div>
-                    <span className="text-sm font-bold text-slate-200 group-hover:text-white mb-1">
-                      Upload Keras Model
+                    <span className="text-base font-bold text-slate-700 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-100 transition-colors">
+                      Upload Model
                     </span>
-                    <span className="text-xs text-slate-500 group-hover:text-slate-400">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
                       Drag & drop .h5 / .keras
                     </span>
                   </div>
                 )}
+
                 <input type="file" className="hidden" accept=".h5,.keras" onChange={onFileChange} disabled={loading} />
               </label>
 
               {/* Model Stats - Only show if loaded */}
-              {modelInfo && (
-                <div className="space-y-2 animate-in slide-in-from-bottom-2 duration-500">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                    <span className="text-xs font-bold text-slate-400 uppercase">Layers</span>
-                    <span className="text-sm font-mono font-bold text-blue-400">{modelInfo.layers_count}</span>
+              {modelInfo ? (
+                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-inner">
+                      <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Layers</div>
+                      <div className="text-lg font-mono font-bold text-blue-500 dark:text-blue-400">{modelInfo.layers_count}</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-inner">
+                      <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Params</div>
+                      <div className="text-lg font-mono font-bold text-purple-500 dark:text-purple-400 truncate" title={Number(modelInfo.total_params).toLocaleString()}>
+                        {(Number(modelInfo.total_params) / 1000000).toFixed(1)}M
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                    <span className="text-xs font-bold text-slate-400 uppercase">Total Params</span>
-                    <span className="text-sm font-mono font-bold text-purple-400">{Number(modelInfo.total_params).toLocaleString()}</span>
-                  </div>
+
+                </div>
+              ) : (
+                <div className="text-center py-4 border-t border-slate-100 dark:border-slate-800">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No model loaded yet.</p>
                 </div>
               )}
             </div>
+
+            {/* Footer Info */}
+            <div className="px-6 py-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+              <span>v1.0.0</span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                System Ready
+              </span>
+            </div>
+
           </div>
         </Panel>
 
