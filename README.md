@@ -1,9 +1,6 @@
 # Neural Network Visualizer 🧠
 
 A professional, web-based tool for inspecting Keras/TensorFlow architectures (`.h5`, `.keras`). It parses deep learning models into interactive, interpretable graphs, extracting layer details, tensor shapes, and computational statistics (FLOPs/Params).
-
-![System Preview](https://via.placeholder.com/1200x600?text=Neural+Visualizer+Preview)
-
 ---
 
 ## 🚀 Features
@@ -115,5 +112,3 @@ We have verified the system with:
 - Custom Models with user-defined layers (handled via robust fallback)
 
 ---
-
-**Developed for Advanced Agentic Coding by Google Deepmind Team.**
